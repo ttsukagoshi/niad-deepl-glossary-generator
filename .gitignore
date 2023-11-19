@@ -1,9 +1,13 @@
-# Python virtual environment
+# Python
 env/
+__pycache__/
 
 # 設定ファイル
 glossary_config.json
 .glossaryrc.json
+
+# 一時ファイル
+temp/
 
 # System
 .DS_Store
