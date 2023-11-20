@@ -20,11 +20,16 @@ def get_html_text(url: str) -> str:
     return r.text
 
 
-def extract_glossary_url_list(config) -> str:
+def extract_glossary_url_list(config) -> tuple:
     """
     NIAD用語集のインデックスページのHTMLテキストから、
-    記載されている用語集のURLを (URL, 用語) のtupleとして抽出しそのリストを返す
+    記載されている用語集のURLを (URL, 用語) のtupleとして抽出しそのリストを返す。
+    NIAD用語集ページへの過度のアクセスを避けるため、一度アクセスするとHTMLテキストのコピーと
+    取得日時がtempフォルダ内に記録され、次回実行時に、前回取得日時からの間隔が
+    glossary_config.json で指定した間隔（秒）未満であれば、
+    サイトにアクセスせず代わりにtempフォルダ内のHTMLテキストを読み込む。
     config: dict - rootのglossary_config.jsonを読み込んだdict
+    return: tuple - (URL, 用語) のtupleのリストと、サイトにアクセスして更新したかどうかのbool値
     """
     html_text = ""
     html_updated = False
@@ -77,5 +82,27 @@ def extract_glossary_url_list(config) -> str:
     for term_block in term_blocks_list:
         url_pattern = r'<li>\s*?<a href="(?P<url>https://niadqe\.jp/glossary/\S*?/)">(?P<term>\S*?)</a>\s*?</li>'
         url_list += re.findall(url_pattern, term_block, re.MULTILINE)
-    print(url_list, len(url_list))
-    return url_list
+    return url_list, html_updated
+
+
+def get_glossary_details(term_url) -> tuple:
+    """
+    NIAD用語集の各用語ページのURLからその内容をHTMLテキストとして取得した上で、
+    その用語の「日本語」「英語」「意味（日本語）」「意味（英語）」「URL」をこの順のtupleとして返す
+    """
+    # 用語ページのHTMLテキストを取得
+    term_html_text = get_html_text(term_url)
+    # 用語ページのHTMLテキストから、目的の各要素を抽出
+    glossary_details_pattern = r'<h2 id="jp">(?P<term_ja>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_ja>[\s\S]*?)</div>\s*?<h2 id="en">(?P<term_en>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_en>[\s\S]*?)</div>'
+    # glossary_details = re.search(
+    #     glossary_details_pattern, term_html_text, re.MULTILINE
+    # ).groupdict()
+    glossary_details = re.search(glossary_details_pattern, term_html_text, re.MULTILINE)
+    print(glossary_details)
+    return (
+        glossary_details["term_ja"].strip(),
+        glossary_details["term_en"].strip(),
+        glossary_details["detail_ja"].strip(),
+        glossary_details["detail_en"].strip(),
+        term_url,
+    )
