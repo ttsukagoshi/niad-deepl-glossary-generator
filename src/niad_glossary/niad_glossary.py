@@ -6,7 +6,8 @@ import os
 import re
 import requests
 
-TEMP_INDEX_FILE_PATH = os.path.join("temp", "niad_glossary_index.html")
+TEMP_DIR_PATH = "temp"
+TEMP_INDEX_FILE_PATH = os.path.join(TEMP_DIR_PATH, "niad_glossary_index.html")
 TEMP_INDEX_TIMESTAMP_FILE_PATH = os.path.join(
     "temp", "niad_glossary_index_timestamp.json"
 )
@@ -51,6 +52,8 @@ def extract_glossary_url_list(config) -> tuple:
             html_text = get_html_text(config["niad_glossary"]["index_url"])
             html_updated = True
     else:
+        if not os.path.exists(TEMP_DIR_PATH):
+            os.makedirs(TEMP_DIR_PATH)
         html_text = get_html_text(config["niad_glossary"]["index_url"])
         html_updated = True
 
@@ -93,16 +96,23 @@ def get_glossary_details(term_url) -> tuple:
     # 用語ページのHTMLテキストを取得
     term_html_text = get_html_text(term_url)
     # 用語ページのHTMLテキストから、目的の各要素を抽出
-    glossary_details_pattern = r'<h2 id="jp">(?P<term_ja>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_ja>[\s\S]*?)</div>\s*?<h2 id="en">(?P<term_en>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_en>[\s\S]*?)</div>'
-    # glossary_details = re.search(
-    #     glossary_details_pattern, term_html_text, re.MULTILINE
-    # ).groupdict()
-    glossary_details = re.search(glossary_details_pattern, term_html_text, re.MULTILINE)
+    glossary_details_pattern = r'<h2 id="jp">(?P<term_ja>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_ja>[\s\S]*?)</div>\s*?(<h2 id="en">(?P<term_en>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_en>[\s\S]*?)</div>)?'
+    glossary_details = re.search(
+        glossary_details_pattern, term_html_text, re.MULTILINE
+    ).groupdict()
     print(glossary_details)
     return (
-        glossary_details["term_ja"].strip(),
-        glossary_details["term_en"].strip(),
-        glossary_details["detail_ja"].strip(),
-        glossary_details["detail_en"].strip(),
+        glossary_details["term_ja"].strip()
+        if glossary_details["term_ja"] is not None
+        else "",
+        glossary_details["term_en"].strip()
+        if glossary_details["term_en"] is not None
+        else "",
+        glossary_details["detail_ja"].strip()
+        if glossary_details["detail_ja"] is not None
+        else "",
+        glossary_details["detail_en"].strip()
+        if glossary_details["detail_en"] is not None
+        else "",
         term_url,
     )
