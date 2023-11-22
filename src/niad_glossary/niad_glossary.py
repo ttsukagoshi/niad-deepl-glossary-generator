@@ -9,8 +9,9 @@ import requests
 TEMP_DIR_PATH = "temp"
 TEMP_INDEX_FILE_PATH = os.path.join(TEMP_DIR_PATH, "niad_glossary_index.html")
 TEMP_INDEX_TIMESTAMP_FILE_PATH = os.path.join(
-    "temp", "niad_glossary_index_timestamp.json"
+    TEMP_DIR_PATH, "niad_glossary_index_timestamp.json"
 )
+TEMP_TERMS_FILE_PATH = os.path.join(TEMP_DIR_PATH, "[[page_id]].html")
 
 
 def get_html_text(url: str) -> str:
@@ -19,6 +20,14 @@ def get_html_text(url: str) -> str:
     """
     r = requests.get(url)
     return r.text
+
+
+def get_local_html_text(filepath: str) -> str:
+    """
+    ローカルのHTMLファイルを読み込んでテキストとして返す
+    """
+    with open(filepath, mode="r", encoding="utf-8") as f:
+        return f.read()
 
 
 def extract_glossary_url_list(config) -> tuple:
@@ -88,31 +97,75 @@ def extract_glossary_url_list(config) -> tuple:
     return url_list, html_updated
 
 
-def get_glossary_details(term_url) -> tuple:
+def get_glossary_details(term_url, local=False) -> tuple[str]:
     """
     NIAD用語集の各用語ページのURLからその内容をHTMLテキストとして取得した上で、
     その用語の「日本語」「英語」「意味（日本語）」「意味（英語）」「URL」をこの順のtupleとして返す
     """
+    # 用語ページのHTMLテキストを保存した/する一時ファイルのパスを定義
+    temp_terms_file_path = TEMP_TERMS_FILE_PATH.replace(
+        "[[page_id]]", term_url.split("/")[-2]
+    )
+
     # 用語ページのHTMLテキストを取得
-    term_html_text = get_html_text(term_url)
+    term_html_text = (
+        get_html_text(term_url)
+        if not local
+        else get_local_html_text(temp_terms_file_path)
+    )
+
+    with open(temp_terms_file_path, mode="w", encoding="utf-8") as f:
+        f.write(term_html_text)
+
     # 用語ページのHTMLテキストから、目的の各要素を抽出
-    glossary_details_pattern = r'<h2 id="jp">(?P<term_ja>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_ja>[\s\S]*?)</div>\s*?(<h2 id="en">(?P<term_en>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_en>[\s\S]*?)</div>)?'
+    glossary_details_pattern = r'<h2 id="jp">(?P<term_ja>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_ja>[\s\S]*?)</div>(\s*?<h2 id="en">(?P<term_en>[\s\S]*?)<span>[\s\S]*?</h2>\s*?<div class="term_detail">(?P<detail_en>[\s\S]*?)</div>)?'
     glossary_details = re.search(
         glossary_details_pattern, term_html_text, re.MULTILINE
     ).groupdict()
-    print(glossary_details)
     return (
-        glossary_details["term_ja"].strip()
+        glossary_details["term_ja"].strip().replace("\r", " ").replace("\n", " ")
         if glossary_details["term_ja"] is not None
         else "",
-        glossary_details["term_en"].strip()
+        glossary_details["term_en"].strip().replace("\r", " ").replace("\n", " ")
         if glossary_details["term_en"] is not None
         else "",
-        glossary_details["detail_ja"].strip()
+        glossary_details["detail_ja"].strip().replace("\r", " ").replace("\n", " ")
         if glossary_details["detail_ja"] is not None
         else "",
-        glossary_details["detail_en"].strip()
+        glossary_details["detail_en"].strip().replace("\r", " ").replace("\n", " ")
         if glossary_details["detail_en"] is not None
         else "",
         term_url,
     )
+
+
+def get_niad_glossary(config) -> list[str]:
+    """
+    NIAD用語集から、日英対訳の用語集を2次元配列として返す。
+    同時に、その2次元配列の内容をCSV形式のテキストとして、glossary_config.jsonで設定した出力先に保存する。
+    どちらもヘッダ行付き。
+    config: dict - rootのglossary_config.jsonを読み込んだdict
+    """
+    niad_term_urls, niad_updated = extract_glossary_url_list(config)
+
+    # ヘッダ行を定義
+    niad_terms = ["JA\tEN\tDETAILS_JA\tDETAILS_EN\tURL"]
+
+    # 用語集の各ページについて、ローカルに保存済みの一時ファイルから読み込むか、新規に取得するかのフラグ
+    get_local = False if niad_updated else True
+
+    # 用語集の各ページから詳細を取得
+    for term_url, _ in niad_term_urls:
+        niad_terms.append("\t".join(get_glossary_details(term_url, local=get_local)))
+
+    # 用語集の詳細をCSV形式のテキストとして出力
+    if not os.path.exists(config["output"]["dir"]):
+        os.makedirs(config["output"]["dir"])
+    with open(
+        os.path.join(config["output"]["dir"], config["output"]["niad_glossary"]),
+        mode="w",
+        encoding="utf-8",
+    ) as f:
+        f.write("\n".join(niad_terms))
+
+    return niad_terms
