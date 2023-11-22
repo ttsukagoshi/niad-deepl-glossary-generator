@@ -6,8 +6,9 @@ __pycache__/
 glossary_config.json
 .glossaryrc.json
 
-# 一時ファイル
+# 実行結果ファイル
 temp/
+output/
 
 # System
 .DS_Store
