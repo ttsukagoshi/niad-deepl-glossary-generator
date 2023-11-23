@@ -28,7 +28,8 @@ NIAD の用語集（日英）と自社の用語集から、DeepL 用の用語集
   "output": {
     "dir": "output", // 出力先ディレクトリ
     "niad_glossary": "niad_glossary.csv", // NIAD用語集の出力CSVファイル名
-    "gsheets_glossary": "my_glossary.csv" // 自社用語集の出力CSVファイル名
+    "gsheets_glossary": "my_glossary.csv", // 自社用語集の出力CSVファイル名
+    "deepl_glossary": "deepl_glossary.csv" // 最終的に出力するDeepL用の出力CSVファイル名
   }
 }
 ```
