@@ -2,9 +2,12 @@
 env/
 __pycache__/
 
+# Google
+.google/*.*
+!.google/README.md
+
 # 設定ファイル
 glossary_config.json
-.glossaryrc.json
 
 # 実行結果ファイル
 temp/
