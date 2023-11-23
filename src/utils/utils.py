@@ -15,12 +15,20 @@ def validate_config(config=None) -> dict:
     """
     # デフォルト設定値
     default_config = {
-        "gsheets_glossary": {"spreadsheet_id": None, "is_priority": True},
+        "gsheets_glossary": {
+            "spreadsheet_id": None,
+            "sheet_name": None,
+            "is_priority": True,
+        },
         "niad_glossary": {
             "index_url": "https://niadqe.jp/glossary/",
             "interval_sec": 3600,
         },
-        "output": {"dir": "output", "niad_glossary": "niad_glossary.csv"},
+        "output": {
+            "dir": "output",
+            "niad_glossary": "niad_glossary.csv",
+            "gsheets_glossary": "my_glossary.csv",
+        },
     }
     if config is None:
         config = default_config
