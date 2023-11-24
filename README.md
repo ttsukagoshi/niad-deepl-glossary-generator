@@ -3,6 +3,9 @@
 NIAD の用語集（日英）と自社の用語集から、DeepL 用の用語集を作成する。
 
 ## 初期設定
+<img width="684" alt="本レポジトリのトップから、Download ZIPする方法を示したスクリーンショット画像" src="https://github.com/ttsukagoshi/niad-deepl-glossary-generator/assets/55706659/58067455-ba32-4810-adbf-493f92c34061">
+
+
 
 ### Google スプレッドシートへのアクセス
 
