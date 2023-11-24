@@ -12,7 +12,8 @@
 
 ローカル環境で本レポジトリを複製する。
 
-<img width="684" alt="本レポジトリのトップから、Download ZIPする方法を示したスクリーンショット画像" src="https://github.com/ttsukagoshi/niad-deepl-glossary-generator/assets/55706659/58067455-ba32-4810-adbf-493f92c34061">
+<img width="684" alt="本レポジトリのトップから、Download ZIPする方法を示したスクリーンショット画像" src="https://github.com/ttsukagoshi/niad-deepl-glossary-generator/assets/55706659/ab4ae8d1-028d-44d7-9235-f863b4dffcdc">
+
 
 ### 仮想環境の構築、起動
 
